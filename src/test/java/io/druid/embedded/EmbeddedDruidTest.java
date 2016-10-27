@@ -1,32 +1,21 @@
-/*
- * Copyright 2015 eBay Software Foundation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.druid.embedded;
 
 import io.druid.data.input.Row;
+import io.druid.data.input.impl.DimensionSchema;
 import io.druid.data.input.impl.DimensionsSpec;
+import io.druid.data.input.impl.DimensionSchema.ValueType;
+import io.druid.data.input.impl.StringDimensionSchema;
 import io.druid.embedded.load.Loader;
 import io.druid.embedded.load.impl.CSVLoader;
 import io.druid.granularity.QueryGranularity;
 import io.druid.query.Result;
 import io.druid.query.aggregation.AggregatorFactory;
+import io.druid.query.aggregation.DoubleMaxAggregatorFactory;
+import io.druid.query.aggregation.DoubleMinAggregatorFactory;
 import io.druid.query.aggregation.DoubleSumAggregatorFactory;
+import io.druid.query.aggregation.LongMaxAggregatorFactory;
+import io.druid.query.aggregation.LongMinAggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
-import io.druid.query.aggregation.MaxAggregatorFactory;
-import io.druid.query.aggregation.MinAggregatorFactory;
 import io.druid.query.aggregation.PostAggregator;
 import io.druid.query.aggregation.histogram.ApproximateHistogramAggregatorFactory;
 import io.druid.query.aggregation.histogram.ApproximateHistogramFoldingAggregatorFactory;
@@ -69,20 +58,22 @@ public class EmbeddedDruidTest {
 	    List<String> columns = Arrays.asList("colo", "pool", "report", "URL", "TS", "metric", "value", "count", "min", "max", "sum");
 	    List<String> exclusions = Arrays.asList("_Timestamp", "_Machine", "_ThreadId", "_Query");
 	    List<String> metrics = Arrays.asList("value", "count", "min", "max", "sum");
-	    List<String> dimensions = new ArrayList<String>(columns);
+	    List<DimensionSchema> dimensions = new ArrayList<DimensionSchema>();
+	    for(String dim : columns){
+	    	dimensions.add(new StringDimensionSchema(dim));
+	    }
 	    dimensions.removeAll(exclusions);
 	    dimensions.removeAll(metrics);
-	    Loader loader = new CSVLoader(reader, columns, dimensions, "TS");
+	    Loader loader = new CSVLoader(reader, columns, columns, "TS");
 
 	    DimensionsSpec dimensionsSpec = new DimensionsSpec(dimensions, null, null);
 	    AggregatorFactory[] metricsAgg = new AggregatorFactory[] {
 	        new LongSumAggregatorFactory("agg_count", "count"),
-	        new MaxAggregatorFactory("agg_max", "max"),
-	        new MinAggregatorFactory("agg_min", "min"),
+	        new LongMaxAggregatorFactory("agg_max", "max"),
+	        new LongMinAggregatorFactory("agg_min", "min"),
 	        new DoubleSumAggregatorFactory("agg_sum", "sum"),
-	        new ApproximateHistogramAggregatorFactory("agg_histogram", "value", null, null, null, null)
 	    };
-	    IncrementalIndexSchema indexSchema = new IncrementalIndexSchema(0, QueryGranularity.ALL, dimensionsSpec, metricsAgg);
+	    IncrementalIndexSchema indexSchema = new IncrementalIndexSchema(0, QueryGranularity.fromString("ALL"), dimensionsSpec, metricsAgg);
 	    QueryableIndex index = IndexHelper.getQueryableIndex(loader, indexSchema);
 	    return index;
 	}
@@ -97,14 +88,13 @@ public class EmbeddedDruidTest {
 		GroupByQuery query = GroupByQuery.builder()
 	      .setDataSource("test")
 	      .setQuerySegmentSpec(QuerySegmentSpecs.create(new Interval(0, new DateTime().getMillis())))
-	      .setGranularity(QueryGranularity.NONE)
+	      .setGranularity(QueryGranularity.fromString("NONE"))
 	      .addDimension("URL")
 	      .addAggregator(new LongSumAggregatorFactory("agg_count", "agg_count"))
-	      .addAggregator(new MaxAggregatorFactory("agg_max", "agg_max"))
-	      .addAggregator(new MinAggregatorFactory("agg_min", "agg_min"))
+	      .addAggregator(new LongMaxAggregatorFactory("agg_max", "agg_max"))
+	      .addAggregator(new LongMinAggregatorFactory("agg_min", "agg_min"))
 	      .addAggregator(new DoubleSumAggregatorFactory("agg_sum", "agg_sum"))
-	      .addAggregator(new ApproximateHistogramFoldingAggregatorFactory("agg_histogram", "agg_histogram", 20, 5, null, null))
-	      .addPostAggregator(new QuantilesPostAggregator("agg_quantiles", "agg_histogram", new float[] {0.25f, 0.5f, 0.75f, 0.95f, 0.99f}))
+	      
 	      .setDimFilter(DimFilters.and(filters))
 	      .build();
 
@@ -148,17 +138,16 @@ public class EmbeddedDruidTest {
 	            .metric("agg_count")
 	            .dataSource("test")
 	            .intervals(QuerySegmentSpecs.create(new Interval(0, new DateTime().getMillis())))
-	            .granularity(QueryGranularity.NONE)
+	            .granularity(QueryGranularity.fromString("NONE"))
 	            .dimension("colo")
 	            .aggregators(
 	                Arrays.<AggregatorFactory>asList(
 	                    new LongSumAggregatorFactory("agg_count", "agg_count"),
-	                    new MaxAggregatorFactory("agg_max", "agg_max"),
-	                    new MinAggregatorFactory("agg_min", "agg_min"),
-	                    new DoubleSumAggregatorFactory("agg_sum", "agg_sum"),
-	                    new ApproximateHistogramFoldingAggregatorFactory("agg_histogram", "agg_histogram", 5, 10, null, null)))
-	            .postAggregators(
-	                Arrays.<PostAggregator>asList(new QuantilePostAggregator("agg_quantiles","agg_histogram", 0.5f)))
+	                    new LongMaxAggregatorFactory("agg_max", "agg_max"),
+	                    new LongMinAggregatorFactory("agg_min", "agg_min"),
+	                    new DoubleSumAggregatorFactory("agg_sum", "agg_sum"))
+	                    
+	            )
 	            .filters(DimFilters.and(filters)).build();
 	    @SuppressWarnings("unchecked")
 	    Sequence<Result> sequence = QueryHelper.run(query, index);
