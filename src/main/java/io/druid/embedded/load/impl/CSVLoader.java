@@ -28,6 +28,7 @@ import java.util.StringTokenizer;
 
 import io.druid.data.input.InputRow;
 import io.druid.data.input.MapBasedInputRow;
+import io.druid.data.input.impl.DimensionSchema;
 import io.druid.embedded.load.Loader;
 
 /**
@@ -48,11 +49,11 @@ public class CSVLoader extends Loader {
 	/**
 	 * @param reader : Reader object pointing to CSV file
 	 * @param columns : List of all columns in CSV file (including metric and "value" column)
-	 * @param dimensions : List of dimensions (Excluding metric and value columns)
+	 * @param columns2 : List of dimensions (Excluding metric and value columns)
 	 * @param timestampDimension : Dimension which indicates timestamp field in CSV File.
 	 */
-	public CSVLoader(Reader reader, List<String> columns, List<String> dimensions, String timestampDimension) {
-		super(columns, dimensions, timestampDimension);
+	public CSVLoader(Reader reader, List<String> columns, List<String> dims, String timestampDimension) {
+		super(columns, dims, timestampDimension);
 		this.reader = reader;
 	}
 	

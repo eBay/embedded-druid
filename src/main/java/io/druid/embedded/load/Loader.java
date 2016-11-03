@@ -19,6 +19,7 @@ package io.druid.embedded.load;
 import java.util.List;
 
 import io.druid.data.input.InputRow;
+import io.druid.data.input.impl.DimensionSchema;
 
 /**
  * This abstract class is interface for loading data of various formats. Possible implementation can be

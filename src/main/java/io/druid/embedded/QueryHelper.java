@@ -26,6 +26,7 @@ import io.druid.query.groupby.GroupByQueryConfig;
 import io.druid.query.groupby.GroupByQueryEngine;
 import io.druid.query.groupby.GroupByQueryQueryToolChest;
 import io.druid.query.groupby.GroupByQueryRunnerFactory;
+import io.druid.query.metadata.SegmentMetadataQueryConfig;
 import io.druid.query.metadata.SegmentMetadataQueryQueryToolChest;
 import io.druid.query.metadata.SegmentMetadataQueryRunnerFactory;
 import io.druid.query.metadata.metadata.SegmentMetadataQuery;
@@ -53,6 +54,7 @@ import io.druid.segment.QueryableIndexSegment;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -121,7 +123,8 @@ public class QueryHelper {
 	}
 
 	private static SegmentMetadataQueryRunnerFactory getSegmentMetadataQueryRunnerFactory() {
-	    SegmentMetadataQueryQueryToolChest toolChest = new SegmentMetadataQueryQueryToolChest();
+		SegmentMetadataQueryConfig smqc = new SegmentMetadataQueryConfig();
+	    SegmentMetadataQueryQueryToolChest toolChest = new SegmentMetadataQueryQueryToolChest(smqc);
 	    final SegmentMetadataQueryRunnerFactory factory =
 	        new SegmentMetadataQueryRunnerFactory(toolChest, Utils.NOOP_QUERYWATCHER);
 	    return factory;
