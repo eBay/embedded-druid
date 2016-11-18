@@ -65,8 +65,8 @@ public class IndexHelper {
 	   * The only way to get a QueryableIndex from IncrementalIndex is to persist the IncrementalIndex
 	   * and reload it. This methods does that.
 	   *
-	   * @param loader
-	   * @param aggregates
+	   * @param loader : Loader object
+	   * @param indexSchema : IncrementalIndexSchema object
 	   * @return
 	   * @throws IOException
 	   */
