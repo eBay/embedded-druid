@@ -49,7 +49,7 @@ public class CSVLoader extends Loader {
 	/**
 	 * @param reader : Reader object pointing to CSV file
 	 * @param columns : List of all columns in CSV file (including metric and "value" column)
-	 * @param columns2 : List of dimensions (Excluding metric and value columns)
+	 * @param dims : List of dimensions (Excluding metric and value columns)
 	 * @param timestampDimension : Dimension which indicates timestamp field in CSV File.
 	 */
 	public CSVLoader(Reader reader, List<String> columns, List<String> dims, String timestampDimension) {
